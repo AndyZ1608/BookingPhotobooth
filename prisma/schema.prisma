@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+model Admin {
+  id           String     @id @default(cuid())
+  username     String     @unique
+  email        String     @unique
+  passwordHash String
+  role         String     @default("STAFF")
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  sessions     Session[]
+  auditLogs    AuditLog[]
+
+  @@map("admins")
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  adminId   String
+  admin     Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime  @default(now())
+
+  @@index([adminId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model Package {
+  id                     String    @id @default(cuid())
+  code                   String    @unique
+  name                   String
+  unitPrice              Int
+  durationPerShotMinutes Int
+  isActive               Boolean   @default(true)
+  sortOrder              Int       @default(0)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  bookings               Booking[]
+
+  @@map("packages")
+}
+
+model Resource {
+  id           String        @id @default(cuid())
+  name         String
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  bookings     Booking[]
+  bookingSlots BookingSlot[]
+  blockedTimes BlockedTime[]
+
+  @@map("resources")
+}
+
+model Booking {
+  id                     String        @id @default(cuid())
+  bookingCode            String        @unique
+  resourceId             String
+  resource               Resource      @relation(fields: [resourceId], references: [id])
+  packageId              String?
+  package                Package?      @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  packageName            String
+  unitPrice              Int
+  durationPerShotMinutes Int
+  quantity               Int
+  totalPrice             Int
+  customerName           String
+  customerPhone          String
+  note                   String?
+  internalNote           String?
+  bookingDate            String        @db.VarChar(10)
+  startTime              String        @db.VarChar(5)
+  endTime                String        @db.VarChar(5)
+  status                 BookingStatus @default(PENDING)
+  cancelledAt            DateTime?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  slots                  BookingSlot[]
+  notificationLogs       NotificationLog[]
+
+  @@index([bookingDate, startTime])
+  @@index([customerPhone])
+  @@index([status])
+  @@map("bookings")
+}
+
+model BookingSlot {
+  id         String   @id @default(cuid())
+  bookingId  String
+  booking    Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id])
+  slotDate   String   @db.VarChar(10)
+  slotTime   String   @db.VarChar(5)
+  createdAt  DateTime @default(now())
+
+  @@unique([resourceId, slotDate, slotTime])
+  @@index([bookingId])
+  @@map("booking_slots")
+}
+
+model BlockedTime {
+  id         String   @id @default(cuid())
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  date       String   @db.VarChar(10)
+  startTime  String   @db.VarChar(5)
+  endTime    String   @db.VarChar(5)
+  allDay     Boolean  @default(false)
+  reason     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([date])
+  @@map("blocked_times")
+}
+
+model BusinessSetting {
+  id                          String   @id @default("business")
+  openingTime                 String   @default("09:00") @db.VarChar(5)
+  closingTime                 String   @default("22:00") @db.VarChar(5)
+  slotDurationMinutes         Int      @default(10)
+  minimumBookingNoticeMinutes Int      @default(30)
+  maximumBookingDaysAhead     Int      @default(30)
+  maximumQuantity             Int      @default(10)
+  timezone                    String   @default("Asia/Ho_Chi_Minh")
+  currency                    String   @default("VND")
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  @@map("business_settings")
+}
+
+model NotificationLog {
+  id         String             @id @default(cuid())
+  bookingId  String?
+  booking    Booking?           @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  channel    String             @default("telegram")
+  type       String             @default("BOOKING_CREATED")
+  status     NotificationStatus @default(PENDING)
+  message    String?
+  error      String?
+  payload    Json?
+  retryCount Int                @default(0)
+  sentAt     DateTime?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@index([bookingId])
+  @@index([status])
+  @@map("notification_logs")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String?
+  admin      Admin?   @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([adminId])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
