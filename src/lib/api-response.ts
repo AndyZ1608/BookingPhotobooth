@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 
 export type ApiErrorCode =
   | "BAD_REQUEST"
+  | "INVALID_CREDENTIALS"
   | "UNAUTHORIZED"
   | "FORBIDDEN"
   | "NOT_FOUND"

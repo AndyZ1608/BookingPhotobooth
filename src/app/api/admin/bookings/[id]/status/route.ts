@@ -1,7 +1,7 @@
 import { fail, ok, unknownError, validationError } from "@/lib/api-response";
 import { getClientIp } from "@/lib/rate-limit";
 import { statusPatchSchema } from "@/lib/validation";
-import { requireAdmin } from "@/server/auth";
+import { adminAuthErrorResponse, requireAdminSession } from "@/server/auth";
 import { updateBookingStatus } from "@/server/bookings";
 import { assertSameOrigin } from "@/server/security";
 
@@ -14,7 +14,7 @@ export async function PATCH(request: Request, context: Params) {
   if (csrf) return csrf;
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireAdminSession();
     const { id } = await context.params;
     const body = await request.json();
     const parsed = statusPatchSchema.safeParse(body);
@@ -29,6 +29,9 @@ export async function PATCH(request: Request, context: Params) {
 
     return ok(booking);
   } catch (error) {
+    const authError = adminAuthErrorResponse(error);
+    if (authError) return authError;
+
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return fail("UNAUTHORIZED", "Vui lòng đăng nhập.", 401);
     }

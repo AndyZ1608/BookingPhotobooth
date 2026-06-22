@@ -1,6 +1,6 @@
 import { fail, ok, unknownError } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/server/auth";
+import { adminAuthErrorResponse, requireAdminSession } from "@/server/auth";
 import { writeAuditLog } from "@/server/audit";
 import { assertSameOrigin } from "@/server/security";
 
@@ -13,7 +13,7 @@ export async function DELETE(request: Request, context: Params) {
   if (csrf) return csrf;
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireAdminSession();
     const { id } = await context.params;
     await prisma.blockedTime.delete({ where: { id } });
     await writeAuditLog({
@@ -24,6 +24,9 @@ export async function DELETE(request: Request, context: Params) {
     });
     return ok({ deleted: true });
   } catch (error) {
+    const authError = adminAuthErrorResponse(error);
+    if (authError) return authError;
+
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return fail("UNAUTHORIZED", "Vui lòng đăng nhập.", 401);
     }

@@ -1,4 +1,4 @@
-import type { Prisma, BusinessSetting } from "@/generated/prisma";
+import type { BusinessSetting, Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 

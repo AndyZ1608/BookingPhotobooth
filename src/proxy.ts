@@ -3,18 +3,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE } from "@/lib/constants";
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const hasSessionCookie = Boolean(request.cookies.get(ADMIN_SESSION_COOKIE)?.value);
 
   if (pathname.startsWith("/admin") && pathname !== "/admin/login" && !hasSessionCookie) {
     const loginUrl = new URL("/admin/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    loginUrl.searchParams.set("next", `${pathname}${search}`);
     return NextResponse.redirect(loginUrl);
   }
 
   if (
     pathname.startsWith("/api/admin") &&
     pathname !== "/api/admin/auth/login" &&
+    pathname !== "/api/admin/auth/logout" &&
     !hasSessionCookie
   ) {
     return NextResponse.json(

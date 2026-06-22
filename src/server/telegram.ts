@@ -1,4 +1,4 @@
-import type { Booking, Prisma } from "@/generated/prisma";
+import type { Booking, Prisma } from "@prisma/client";
 
 import { BOOKING_STATUS_LABELS } from "@/lib/constants";
 import { formatVnd } from "@/lib/money";

@@ -43,8 +43,13 @@ export const createBookingSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  identifier: z.string().trim().min(1, "Vui lòng nhập username hoặc email."),
-  password: z.string().min(1, "Vui lòng nhập mật khẩu."),
+  identifier: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập username hoặc email.")
+    .max(100, "Username hoặc email quá dài."),
+  password: z.string().min(1, "Vui lòng nhập mật khẩu.").max(200, "Mật khẩu quá dài."),
+  next: z.string().max(300).optional(),
 });
 
 const packageBaseSchema = z.object({

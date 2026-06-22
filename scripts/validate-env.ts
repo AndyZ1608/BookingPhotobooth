@@ -5,6 +5,8 @@ import { z } from "zod";
 const schema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required."),
   SESSION_SECRET: z.string().min(32, "SESSION_SECRET must have at least 32 characters."),
+  SESSION_COOKIE_SECURE: z.enum(["true", "false"]).optional(),
+  ADMIN_SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(24 * 30).optional(),
   RUN_DB_SEED: z.enum(["true", "false"]).optional(),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   TELEGRAM_CHAT_ID: z.string().optional(),

@@ -40,6 +40,8 @@ Các biến bắt buộc trong `.env`:
 ```bash
 DATABASE_URL="postgresql://photobooth:photobooth@db:5432/booking_photobooth?schema=public"
 SESSION_SECRET="random-string-it-nhat-32-ky-tu"
+SESSION_COOKIE_SECURE="false"
+ADMIN_SESSION_TTL_HOURS="12"
 RUN_DB_SEED="true"
 APP_PORT="3000"
 
@@ -137,6 +139,7 @@ Release check cũng xác minh:
 - Corepack: `0.35.0`
 - pnpm: `10.23.0`
 - OpenSSL: available
+- Prisma Client: `require("@prisma/client")` load được trong runtime image
 
 ## Migration và dữ liệu
 
@@ -203,7 +206,7 @@ proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 proxy_set_header X-Forwarded-Proto $scheme;
 ```
 
-Khi `NODE_ENV=production`, session cookie được set `Secure`.
+Cookie admin không phụ thuộc hostname/IP và không dùng cookie domain. Với HTTP nội bộ hoặc test qua IP, đặt `SESSION_COOKIE_SECURE="false"`. Khi chạy sau Nginx HTTPS, đặt `SESSION_COOKIE_SECURE="true"` trong `.env`.
 
 ## Chi tiết contract
 

@@ -1,4 +1,4 @@
-import type { Admin, Package, Resource } from "@/generated/prisma";
+import type { Admin, Package, Resource } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import bcrypt from "bcryptjs";
 

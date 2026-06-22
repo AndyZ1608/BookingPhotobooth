@@ -1,14 +1,14 @@
 import { fail, ok, unknownError, validationError } from "@/lib/api-response";
 import { blockedTimeSchema } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/server/auth";
+import { adminAuthErrorResponse, requireAdminSession } from "@/server/auth";
 import { writeAuditLog } from "@/server/audit";
 import { getDefaultResource } from "@/server/resources";
 import { assertSameOrigin } from "@/server/security";
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin();
+    await requireAdminSession();
     const url = new URL(request.url);
     const date = url.searchParams.get("date") || undefined;
     const blockedTimes = await prisma.blockedTime.findMany({
@@ -18,6 +18,9 @@ export async function GET(request: Request) {
     });
     return ok(blockedTimes);
   } catch (error) {
+    const authError = adminAuthErrorResponse(error);
+    if (authError) return authError;
+
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return fail("UNAUTHORIZED", "Vui lòng đăng nhập.", 401);
     }
@@ -30,7 +33,7 @@ export async function POST(request: Request) {
   if (csrf) return csrf;
 
   try {
-    const admin = await requireAdmin();
+    const admin = await requireAdminSession();
     const resource = await getDefaultResource();
     const body = await request.json();
     const parsed = blockedTimeSchema.safeParse(body);
@@ -55,6 +58,9 @@ export async function POST(request: Request) {
     });
     return ok(blocked, { status: 201 });
   } catch (error) {
+    const authError = adminAuthErrorResponse(error);
+    if (authError) return authError;
+
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return fail("UNAUTHORIZED", "Vui lòng đăng nhập.", 401);
     }

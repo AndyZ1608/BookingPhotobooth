@@ -55,5 +55,6 @@ fi
 echo "Running Prisma validate/generate in runtime image..."
 docker compose run --rm --no-deps --entrypoint pnpm app prisma validate
 docker compose run --rm --no-deps --entrypoint pnpm app db:generate
+docker compose run --rm --no-deps --entrypoint node app -e 'const { PrismaClient } = require("@prisma/client"); new PrismaClient(); console.log("Prisma Client OK")'
 
 echo "Release check completed successfully."

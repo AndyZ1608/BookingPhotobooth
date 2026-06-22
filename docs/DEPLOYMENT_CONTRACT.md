@@ -27,6 +27,19 @@ Required versions:
 - Corepack: `0.35.0`
 - pnpm: `10.23.0`
 
+## Admin Auth Contract
+
+- Admin sessions use opaque database tokens.
+- The raw session token may exist only in the HTTP-only cookie.
+- The database stores only an HMAC/hash of the session token.
+- Cookie `secure` is controlled only by `SESSION_COOKIE_SECURE`.
+- Do not derive cookie `secure` from `NODE_ENV`.
+- Do not set a cookie `domain` unless a multi-subdomain requirement is explicitly added.
+- Auth must not depend on a hard-coded IP, hostname, production domain, or `NEXT_PUBLIC_APP_URL`.
+- HTTP deployments must use `SESSION_COOKIE_SECURE="false"`.
+- HTTPS deployments must use `SESSION_COOKIE_SECURE="true"`.
+- Runtime Prisma Client must support `require("@prisma/client")` in the app container.
+
 ## Synchronized Changes
 
 When source code or features change, update the deployment surface in the same change set.

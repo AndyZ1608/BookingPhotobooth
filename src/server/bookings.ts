@@ -1,4 +1,4 @@
-import type { BookingStatus, Prisma } from "@/generated/prisma";
+import type { BookingStatus, Prisma } from "@prisma/client";
 
 import { SLOT_CONFLICT_MESSAGE } from "@/lib/constants";
 import { calculateDurationMinutes, calculateTotalPrice } from "@/lib/money";

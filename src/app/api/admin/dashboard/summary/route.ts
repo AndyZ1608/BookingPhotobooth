@@ -1,11 +1,11 @@
 import { fail, ok, unknownError } from "@/lib/api-response";
 import { getVietnamNow } from "@/lib/time";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/server/auth";
+import { adminAuthErrorResponse, requireAdminSession } from "@/server/auth";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireAdminSession();
     const today = getVietnamNow().date;
 
     const [bookings, revenue] = await Promise.all([
@@ -35,6 +35,9 @@ export async function GET() {
       expectedRevenueToday: revenue._sum.totalPrice ?? 0,
     });
   } catch (error) {
+    const authError = adminAuthErrorResponse(error);
+    if (authError) return authError;
+
     if (error instanceof Error && error.message === "UNAUTHORIZED") {
       return fail("UNAUTHORIZED", "Vui lòng đăng nhập.", 401);
     }

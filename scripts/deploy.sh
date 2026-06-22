@@ -81,6 +81,22 @@ if [ "$session_secret_length" -lt 32 ]; then
   exit 1
 fi
 
+session_cookie_secure="$(read_env_value SESSION_COOKIE_SECURE)"
+if [ -n "$session_cookie_secure" ] && [ "$session_cookie_secure" != "true" ] && [ "$session_cookie_secure" != "false" ]; then
+  echo "SESSION_COOKIE_SECURE must be true or false."
+  exit 1
+fi
+
+admin_session_ttl_hours="$(read_env_value ADMIN_SESSION_TTL_HOURS)"
+if [ -n "$admin_session_ttl_hours" ] && ! [[ "$admin_session_ttl_hours" =~ ^[0-9]+$ ]]; then
+  echo "ADMIN_SESSION_TTL_HOURS must be a positive integer."
+  exit 1
+fi
+if [ -n "$admin_session_ttl_hours" ] && [ "$admin_session_ttl_hours" -lt 1 ]; then
+  echo "ADMIN_SESSION_TTL_HOURS must be at least 1."
+  exit 1
+fi
+
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   export APP_IMAGE_TAG="$(git rev-parse --short HEAD)"
 else

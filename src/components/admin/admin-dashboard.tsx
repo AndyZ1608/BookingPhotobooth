@@ -248,7 +248,7 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
 
   async function logout() {
     await fetch("/api/admin/auth/logout", { method: "POST" });
-    window.location.href = "/admin/login";
+    window.location.assign("/admin/login");
   }
 
   async function saveBooking() {

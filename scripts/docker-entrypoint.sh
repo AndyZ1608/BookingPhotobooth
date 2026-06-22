@@ -32,7 +32,7 @@ wait_for_database() {
 
   while [ "$attempt" -le "$max_attempts" ]; do
     if node - <<'NODE'
-const { PrismaClient } = require("./src/generated/prisma");
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 prisma
