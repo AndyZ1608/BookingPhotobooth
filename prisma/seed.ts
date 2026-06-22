@@ -8,15 +8,13 @@ const prisma = new PrismaClient();
 const DEFAULT_PACKAGES = [
   {
     code: "BASIC",
-    name: "Gói 80K",
-    unitPrice: 80_000,
+    name: "Gói tiêu chuẩn",
     durationPerShotMinutes: 10,
     sortOrder: 1,
   },
   {
     code: "PREMIUM",
-    name: "Gói 120K",
-    unitPrice: 120_000,
+    name: "Gói mở rộng",
     durationPerShotMinutes: 10,
     sortOrder: 2,
   },
@@ -80,7 +78,6 @@ async function seedSettings() {
         maximumBookingDaysAhead: 30,
         maximumQuantity: 10,
         timezone: "Asia/Ho_Chi_Minh",
-        currency: "VND",
       },
     });
   }

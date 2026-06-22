@@ -5,7 +5,13 @@ export async function GET() {
   try {
     const packages = await prisma.package.findMany({
       where: { isActive: true },
-      orderBy: [{ sortOrder: "asc" }, { unitPrice: "asc" }],
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        durationPerShotMinutes: true,
+      },
     });
 
     return ok(packages);

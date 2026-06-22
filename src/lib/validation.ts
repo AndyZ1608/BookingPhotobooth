@@ -60,7 +60,6 @@ const packageBaseSchema = z.object({
     .max(30)
     .transform((value) => value.toUpperCase()),
   name: z.string().trim().min(2).max(100),
-  unitPrice: z.coerce.number().int().positive(),
   durationPerShotMinutes: z.coerce.number().int().min(5).max(240),
 });
 
@@ -96,7 +95,6 @@ export const settingsSchema = z
     maximumBookingDaysAhead: z.coerce.number().int().min(1).max(365),
     maximumQuantity: z.coerce.number().int().min(1).max(100),
     timezone: z.literal("Asia/Ho_Chi_Minh"),
-    currency: z.literal("VND"),
   })
   .refine((value) => value.closingTime > value.openingTime, {
     message: "Giờ đóng cửa phải sau giờ mở cửa.",

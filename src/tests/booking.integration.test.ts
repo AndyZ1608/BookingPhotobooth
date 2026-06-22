@@ -45,8 +45,7 @@ async function seedTestData(): Promise<{ admin: Admin; pack: Package; resource: 
     prisma.package.create({
       data: {
         code: "BASIC",
-        name: "Gói 80K",
-        unitPrice: 80_000,
+        name: "Gói tiêu chuẩn",
         durationPerShotMinutes: 10,
         isActive: true,
       },
@@ -66,7 +65,6 @@ async function seedTestData(): Promise<{ admin: Admin; pack: Package; resource: 
       maximumBookingDaysAhead: 30,
       maximumQuantity: 10,
       timezone: "Asia/Ho_Chi_Minh",
-      currency: "VND",
     },
   });
 
@@ -200,7 +198,7 @@ describeDb("booking integration", () => {
     vi.unstubAllGlobals();
   });
 
-  it("giá booking không đổi sau khi package được chỉnh sửa", async () => {
+  it("booking giữ snapshot tên gói sau khi package được chỉnh sửa", async () => {
     const { pack } = await seedTestData();
     const date = futureDate();
     const booking = await createPublicBooking({
@@ -212,10 +210,9 @@ describeDb("booking integration", () => {
       customerPhone: "0900000001",
     });
 
-    await prisma.package.update({ where: { id: pack.id }, data: { unitPrice: 1 } });
+    await prisma.package.update({ where: { id: pack.id }, data: { name: "Gói mới" } });
     const persisted = await prisma.booking.findUniqueOrThrow({ where: { id: booking.id } });
 
-    expect(persisted.unitPrice).toBe(80_000);
-    expect(persisted.totalPrice).toBe(160_000);
+    expect(persisted.packageName).toBe("Gói tiêu chuẩn");
   });
 });

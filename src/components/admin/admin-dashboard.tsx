@@ -38,7 +38,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { BOOKING_STATUS_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/cn";
-import { formatVnd } from "@/lib/money";
 
 type ApiResponse<T> =
   | { success: true; data: T }
@@ -53,7 +52,6 @@ type SummaryDto = {
   confirmed: number;
   completed: number;
   cancelled: number;
-  expectedRevenueToday: number;
 };
 
 type BookingDto = {
@@ -67,7 +65,6 @@ type BookingDto = {
   packageId: string | null;
   packageName: string;
   quantity: number;
-  totalPrice: number;
   note: string | null;
   internalNote: string | null;
   status: BookingStatus;
@@ -77,7 +74,6 @@ type PackageDto = {
   id: string;
   code: string;
   name: string;
-  unitPrice: number;
   durationPerShotMinutes: number;
   isActive: boolean;
   sortOrder: number;
@@ -100,7 +96,6 @@ type SettingsDto = {
   maximumBookingDaysAhead: number;
   maximumQuantity: number;
   timezone: "Asia/Ho_Chi_Minh";
-  currency: "VND";
 };
 
 type TabKey = "bookings" | "packages" | "blocked" | "settings";
@@ -173,7 +168,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
     id: "",
     code: "",
     name: "",
-    unitPrice: 80_000,
     durationPerShotMinutes: 10,
     isActive: true,
     sortOrder: 0,
@@ -360,7 +354,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
       const payload = {
         code: packageForm.code,
         name: packageForm.name,
-        unitPrice: packageForm.unitPrice,
         durationPerShotMinutes: packageForm.durationPerShotMinutes,
         isActive: packageForm.isActive,
         sortOrder: packageForm.sortOrder,
@@ -384,7 +377,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
         id: "",
         code: "",
         name: "",
-        unitPrice: 80_000,
         durationPerShotMinutes: 10,
         isActive: true,
         sortOrder: 0,
@@ -500,14 +492,13 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
           ) : null}
 
           {summary ? (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               {[
                 ["Tổng hôm nay", summary.totalToday],
                 ["Chờ xác nhận", summary.pending],
                 ["Đã xác nhận", summary.confirmed],
                 ["Hoàn thành", summary.completed],
                 ["Đã hủy", summary.cancelled],
-                ["Doanh thu dự kiến", formatVnd(summary.expectedRevenueToday)],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-lg border bg-white p-4 shadow-sm">
                   <div className="text-sm text-muted-foreground">{label}</div>
@@ -578,7 +569,7 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
                 </div>
 
                 <div className="mt-4 overflow-x-auto">
-                  <table className="w-full min-w-[860px] text-sm">
+                  <table className="w-full min-w-[780px] text-sm">
                     <thead>
                       <tr className="border-b text-left text-muted-foreground">
                         <th className="py-2 pr-3">Mã</th>
@@ -587,7 +578,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
                         <th className="py-2 pr-3">SĐT</th>
                         <th className="py-2 pr-3">Gói</th>
                         <th className="py-2 pr-3">SL</th>
-                        <th className="py-2 pr-3">Tiền</th>
                         <th className="py-2 pr-3">Trạng thái</th>
                         <th className="py-2 text-right">Chi tiết</th>
                       </tr>
@@ -603,7 +593,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
                           <td className="py-3 pr-3">{booking.customerPhone}</td>
                           <td className="py-3 pr-3">{booking.packageName}</td>
                           <td className="py-3 pr-3">{booking.quantity}</td>
-                          <td className="py-3 pr-3 font-semibold">{formatVnd(booking.totalPrice)}</td>
                           <td className="py-3 pr-3">
                             <Badge className={statusClassName[booking.status]}>
                               {BOOKING_STATUS_LABELS[booking.status]}
@@ -746,7 +735,7 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
           {tab === "packages" ? (
             <section className="rounded-lg border bg-white p-4 shadow-sm">
               <h2 className="text-lg font-bold">Quản lý gói chụp</h2>
-              <div className="mt-4 grid gap-3 md:grid-cols-6">
+              <div className="mt-4 grid gap-3 md:grid-cols-5">
                 <Field label="Mã gói">
                   <Input
                     value={packageForm.code}
@@ -762,19 +751,7 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
                     onChange={(event) =>
                       setPackageForm((current) => ({ ...current, name: event.target.value }))
                     }
-                    placeholder="Gói 80K"
-                  />
-                </Field>
-                <Field label="Giá mỗi lần">
-                  <Input
-                    type="number"
-                    value={packageForm.unitPrice}
-                    onChange={(event) =>
-                      setPackageForm((current) => ({
-                        ...current,
-                        unitPrice: Number(event.target.value),
-                      }))
-                    }
+                    placeholder="Gói tiêu chuẩn"
                   />
                 </Field>
                 <Field label="Phút mỗi lần">
@@ -825,7 +802,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
                         id: "",
                         code: "",
                         name: "",
-                        unitPrice: 80_000,
                         durationPerShotMinutes: 10,
                         isActive: true,
                         sortOrder: 0,
@@ -856,7 +832,7 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
                       </Badge>
                     </div>
                     <div className="mt-3 text-sm text-muted-foreground">
-                      {formatVnd(pack.unitPrice)} / lần · {pack.durationPerShotMinutes} phút
+                      {pack.durationPerShotMinutes} phút mỗi lần
                     </div>
                     <Button
                       type="button"
@@ -868,7 +844,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
                           id: pack.id,
                           code: pack.code,
                           name: pack.name,
-                          unitPrice: pack.unitPrice,
                           durationPerShotMinutes: pack.durationPerShotMinutes,
                           isActive: pack.isActive,
                           sortOrder: pack.sortOrder,
@@ -940,9 +915,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
                 <Field label="Múi giờ">
                   <Input value={settings.timezone} readOnly />
                 </Field>
-                <Field label="Tiền tệ">
-                  <Input value={settings.currency} readOnly />
-                </Field>
               </div>
               <Button type="button" className="mt-4" onClick={saveSettings} disabled={saving}>
                 <Save className="h-4 w-4" />
@@ -998,9 +970,6 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
                 </Field>
                 <Field label="Gói">
                   <Input value={selectedBooking.packageName} readOnly />
-                </Field>
-                <Field label="Tổng tiền">
-                  <Input value={formatVnd(selectedBooking.totalPrice)} readOnly />
                 </Field>
               </div>
               <Field label="Ghi chú khách">

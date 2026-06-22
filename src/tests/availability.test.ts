@@ -22,7 +22,6 @@ function settings(): BusinessSetting {
     maximumBookingDaysAhead: 30,
     maximumQuantity: 10,
     timezone: "Asia/Ho_Chi_Minh",
-    currency: "VND",
     createdAt: new Date(),
     updatedAt: new Date(),
   };

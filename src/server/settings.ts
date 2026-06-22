@@ -11,7 +11,6 @@ const DEFAULT_SETTINGS = {
   maximumBookingDaysAhead: 30,
   maximumQuantity: 10,
   timezone: "Asia/Ho_Chi_Minh",
-  currency: "VND",
 };
 
 type Db = Prisma.TransactionClient | typeof prisma;

@@ -1,8 +1,7 @@
 import type { BookingStatus, Prisma } from "@prisma/client";
 
 import { SLOT_CONFLICT_MESSAGE } from "@/lib/constants";
-import { calculateDurationMinutes, calculateTotalPrice } from "@/lib/money";
-import { addMinutesToTime, generateSlotTimes } from "@/lib/time";
+import { addMinutesToTime, calculateDurationMinutes, generateSlotTimes } from "@/lib/time";
 import { normalizePhone } from "@/lib/validation";
 import { prisma } from "@/lib/prisma";
 import { assertStartTimeAvailable, AvailabilityError } from "@/server/availability";
@@ -86,7 +85,6 @@ async function createBookingInTransaction(input: {
           input.quantity,
           selectedPackage.durationPerShotMinutes,
         );
-        const totalPrice = calculateTotalPrice(input.quantity, selectedPackage.unitPrice);
         const endTime = addMinutesToTime(input.startTime, durationMinutes);
         const slotTimes = generateSlotTimes(
           input.startTime,
@@ -115,10 +113,8 @@ async function createBookingInTransaction(input: {
             resourceId: resource.id,
             packageId: selectedPackage.id,
             packageName: selectedPackage.name,
-            unitPrice: selectedPackage.unitPrice,
             durationPerShotMinutes: selectedPackage.durationPerShotMinutes,
             quantity: input.quantity,
-            totalPrice,
             customerName: input.customerName.trim(),
             customerPhone: normalizePhone(input.customerPhone),
             note: input.note?.trim() || null,

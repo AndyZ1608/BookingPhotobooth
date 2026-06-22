@@ -1,5 +1,4 @@
 export const APP_TIMEZONE = "Asia/Ho_Chi_Minh";
-export const APP_CURRENCY = "VND";
 export const SLOT_CONFLICT_MESSAGE =
   "Khung giờ vừa được khách hàng khác đặt. Vui lòng chọn giờ khác.";
 export const ADMIN_SESSION_COOKIE = "photobooth_admin_session";

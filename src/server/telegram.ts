@@ -1,7 +1,6 @@
 import type { Booking, Prisma } from "@prisma/client";
 
 import { BOOKING_STATUS_LABELS } from "@/lib/constants";
-import { formatVnd } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 
 function toJsonValue(value: unknown): Prisma.InputJsonValue | undefined {
@@ -11,7 +10,7 @@ function toJsonValue(value: unknown): Prisma.InputJsonValue | undefined {
 
 export function buildTelegramBookingMessage(booking: Booking) {
   return [
-    "📸 LỊCH PHOTOBOOTH MỚI",
+    "📸 BOOKING MỚI - MOMENTME BOOTH",
     "",
     `Mã lịch: ${booking.bookingCode}`,
     `Khách hàng: ${booking.customerName}`,
@@ -21,7 +20,6 @@ export function buildTelegramBookingMessage(booking: Booking) {
     `Thời gian: ${booking.startTime} - ${booking.endTime}`,
     `Gói chụp: ${booking.packageName}`,
     `Số lần chụp: ${booking.quantity}`,
-    `Tổng tiền: ${formatVnd(booking.totalPrice)}`,
     "",
     `Ghi chú: ${booking.note?.trim() ? booking.note : "Không có"}`,
     `Trạng thái: ${BOOKING_STATUS_LABELS.PENDING}`,

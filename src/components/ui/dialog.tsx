@@ -13,17 +13,17 @@ export const DialogContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPrimitive.Portal>
-    <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-slate-950/50" />
+    <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#2c1720]/55" />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-32px)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-lg bg-white p-5 shadow-xl outline-none",
+        "fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-32px)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-auto rounded-[24px] border border-[#e7cdd5] bg-[#fff9f7] p-5 shadow-[0_24px_80px_rgba(44,23,32,0.24)] outline-none",
         className,
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-3 top-3 rounded-md p-1 text-slate-500 hover:bg-muted">
+      <DialogPrimitive.Close className="absolute right-3 top-3 rounded-md p-1 text-[#735a64] transition hover:bg-[#f1d9df] hover:text-[#6b1837]">
         <X className="h-4 w-4" />
         <span className="sr-only">Đóng</span>
       </DialogPrimitive.Close>
@@ -42,7 +42,7 @@ export const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("text-lg font-bold text-slate-950", className)}
+    className={cn("text-lg font-bold text-[#6b1837]", className)}
     {...props}
   />
 ));

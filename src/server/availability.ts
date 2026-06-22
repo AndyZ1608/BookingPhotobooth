@@ -1,7 +1,7 @@
 import type { BlockedTime, BusinessSetting, Package, Prisma } from "@prisma/client";
 
-import { calculateDurationMinutes } from "@/lib/money";
 import {
+  calculateDurationMinutes,
   generateSlotTimes,
   generateStartTimes,
   isBlockedByIntervals,

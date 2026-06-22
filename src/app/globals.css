@@ -3,22 +3,27 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 99%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --primary: 158 64% 31%;
-  --primary-foreground: 0 0% 100%;
-  --accent: 29 92% 55%;
-  --accent-foreground: 24 85% 12%;
-  --muted: 210 20% 96%;
-  --muted-foreground: 215 16% 42%;
-  --destructive: 0 72% 51%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 214 22% 88%;
-  --input: 214 22% 88%;
-  --ring: 158 64% 31%;
-  --radius: 8px;
+  --background: 15 100% 98%;
+  --foreground: 334 31% 13%;
+  --card: 15 100% 98%;
+  --card-foreground: 334 31% 13%;
+  --primary: 336 63% 26%;
+  --primary-hover: #57122d;
+  --primary-foreground: 15 100% 98%;
+  --secondary: #f8eef1;
+  --secondary-foreground: #6b1837;
+  --accent: 35 50% 57%;
+  --accent-foreground: 334 31% 13%;
+  --muted: 342 42% 92%;
+  --muted-foreground: 331 13% 40%;
+  --destructive: 350 67% 42%;
+  --destructive-foreground: 15 100% 98%;
+  --border: 339 38% 85%;
+  --input: 339 38% 85%;
+  --ring: 340 42% 43%;
+  --success: #557a5a;
+  --error: #b4233b;
+  --radius: 12px;
 }
 
 * {
@@ -28,6 +33,7 @@
 body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
+  text-rendering: optimizeLegibility;
 }
 
 button,
@@ -40,4 +46,15 @@ textarea {
 .container-page {
   width: min(1120px, calc(100% - 32px));
   margin-inline: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

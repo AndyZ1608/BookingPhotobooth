@@ -18,6 +18,10 @@ export type BlockInterval = {
   allDay?: boolean;
 };
 
+export function calculateDurationMinutes(quantity: number, durationPerShotMinutes: number) {
+  return quantity * durationPerShotMinutes;
+}
+
 export function assertDate(value: string) {
   if (!DATE_RE.test(value)) {
     throw new Error("Ngày không hợp lệ.");

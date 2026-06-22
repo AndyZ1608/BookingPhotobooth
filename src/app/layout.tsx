@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
 
 import "@/app/globals.css";
+import { BRAND } from "@/config/brand";
 
 export const metadata: Metadata = {
-  title: "Photobooth Booking",
-  description: "Hệ thống đặt lịch cửa hàng photobooth",
+  title: "MOMENTME BOOTH | Hidden velvet moments",
+  description: `Đặt lịch chụp ảnh tại ${BRAND.name} - ${BRAND.address}.`,
+  icons: {
+    icon: BRAND.faviconPath,
+    shortcut: BRAND.faviconPath,
+    apple: BRAND.faviconPath,
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

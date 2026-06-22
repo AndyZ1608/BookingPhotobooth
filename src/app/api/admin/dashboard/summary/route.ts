@@ -8,20 +8,11 @@ export async function GET() {
     await requireAdminSession();
     const today = getVietnamNow().date;
 
-    const [bookings, revenue] = await Promise.all([
-      prisma.booking.groupBy({
-        by: ["status"],
-        where: { bookingDate: today },
-        _count: { status: true },
-      }),
-      prisma.booking.aggregate({
-        where: {
-          bookingDate: today,
-          status: { notIn: ["CANCELLED", "NO_SHOW"] },
-        },
-        _sum: { totalPrice: true },
-      }),
-    ]);
+    const bookings = await prisma.booking.groupBy({
+      by: ["status"],
+      where: { bookingDate: today },
+      _count: { status: true },
+    });
 
     const counts = Object.fromEntries(bookings.map((item) => [item.status, item._count.status]));
 
@@ -32,7 +23,6 @@ export async function GET() {
       confirmed: counts.CONFIRMED ?? 0,
       completed: counts.COMPLETED ?? 0,
       cancelled: counts.CANCELLED ?? 0,
-      expectedRevenueToday: revenue._sum.totalPrice ?? 0,
     });
   } catch (error) {
     const authError = adminAuthErrorResponse(error);

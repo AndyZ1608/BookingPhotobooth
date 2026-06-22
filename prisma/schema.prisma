@@ -58,7 +58,6 @@ model Package {
   id                     String    @id @default(cuid())
   code                   String    @unique
   name                   String
-  unitPrice              Int
   durationPerShotMinutes Int
   isActive               Boolean   @default(true)
   sortOrder              Int       @default(0)
@@ -90,10 +89,8 @@ model Booking {
   packageId              String?
   package                Package?      @relation(fields: [packageId], references: [id], onDelete: SetNull)
   packageName            String
-  unitPrice              Int
   durationPerShotMinutes Int
   quantity               Int
-  totalPrice             Int
   customerName           String
   customerPhone          String
   note                   String?
@@ -154,7 +151,6 @@ model BusinessSetting {
   maximumBookingDaysAhead     Int      @default(30)
   maximumQuantity             Int      @default(10)
   timezone                    String   @default("Asia/Ho_Chi_Minh")
-  currency                    String   @default("VND")
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
 
