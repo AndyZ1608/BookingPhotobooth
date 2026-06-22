@@ -1,4 +1,4 @@
-import type { BlockedTime, BusinessSetting, Package, Prisma } from "@prisma/client";
+import type { BlockedTime, BusinessSetting, Package, Prisma } from "@/generated/prisma";
 
 import { calculateDurationMinutes } from "@/lib/money";
 import {

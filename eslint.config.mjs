@@ -10,6 +10,7 @@ const config = [
       "node_modules/**",
       "coverage/**",
       "dist/**",
+      "src/generated/**",
       "prisma/migrations/**",
     ],
   },

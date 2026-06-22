@@ -96,20 +96,23 @@ export function BookingForm() {
 
   useEffect(() => {
     let active = true;
-    setLoadingPackages(true);
-    fetch("/api/public/packages")
-      .then((response) => parseJson<PackageDto[]>(response))
-      .then((json) => {
-        if (!active) return;
-        if (json.success) {
-          setPackages(json.data);
-          setSelectedPackageId(json.data[0]?.id ?? "");
-        } else {
-          setError(json.error.message);
-        }
-      })
-      .catch(() => setError("Không tải được danh sách gói chụp."))
-      .finally(() => active && setLoadingPackages(false));
+    queueMicrotask(() => {
+      if (!active) return;
+      setLoadingPackages(true);
+      fetch("/api/public/packages")
+        .then((response) => parseJson<PackageDto[]>(response))
+        .then((json) => {
+          if (!active) return;
+          if (json.success) {
+            setPackages(json.data);
+            setSelectedPackageId(json.data[0]?.id ?? "");
+          } else {
+            setError(json.error.message);
+          }
+        })
+        .catch(() => setError("Không tải được danh sách gói chụp."))
+        .finally(() => active && setLoadingPackages(false));
+    });
     return () => {
       active = false;
     };
@@ -118,35 +121,39 @@ export function BookingForm() {
   useEffect(() => {
     if (!selectedPackageId || !date) return;
 
-    const controller = new AbortController();
-    setLoadingSlots(true);
-    setError("");
-    setSelectedTime("");
+    let controller: AbortController | null = null;
 
-    const params = new URLSearchParams({
-      date,
-      packageId: selectedPackageId,
-      quantity: String(quantity),
+    queueMicrotask(() => {
+      controller = new AbortController();
+      setLoadingSlots(true);
+      setError("");
+      setSelectedTime("");
+
+      const params = new URLSearchParams({
+        date,
+        packageId: selectedPackageId,
+        quantity: String(quantity),
+      });
+
+      fetch(`/api/public/availability?${params}`, { signal: controller.signal })
+        .then((response) => parseJson<AvailabilityDto>(response))
+        .then((json) => {
+          if (json.success) {
+            setSlots(json.data.times);
+            setMaxQuantity(json.data.settings.maximumQuantity);
+          } else {
+            setSlots([]);
+            setError(json.error.message);
+          }
+        })
+        .catch((requestError: unknown) => {
+          if (requestError instanceof DOMException && requestError.name === "AbortError") return;
+          setError("Không tải được khung giờ trống.");
+        })
+        .finally(() => setLoadingSlots(false));
     });
 
-    fetch(`/api/public/availability?${params}`, { signal: controller.signal })
-      .then((response) => parseJson<AvailabilityDto>(response))
-      .then((json) => {
-        if (json.success) {
-          setSlots(json.data.times);
-          setMaxQuantity(json.data.settings.maximumQuantity);
-        } else {
-          setSlots([]);
-          setError(json.error.message);
-        }
-      })
-      .catch((requestError: unknown) => {
-        if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-        setError("Không tải được khung giờ trống.");
-      })
-      .finally(() => setLoadingSlots(false));
-
-    return () => controller.abort();
+    return () => controller?.abort();
   }, [date, quantity, selectedPackageId]);
 
   async function submitBooking() {

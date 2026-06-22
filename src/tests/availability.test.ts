@@ -1,4 +1,4 @@
-import type { BusinessSetting } from "@prisma/client";
+import type { BusinessSetting } from "@/generated/prisma";
 import { describe, expect, it } from "vitest";
 
 import { buildAvailableStartTimes } from "@/server/availability";

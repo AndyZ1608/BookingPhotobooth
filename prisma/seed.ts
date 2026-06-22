@@ -1,8 +1,9 @@
 import "dotenv/config";
 
 import bcrypt from "bcryptjs";
+import { PrismaClient } from "../src/generated/prisma";
 
-import { prisma } from "@/lib/prisma";
+const prisma = new PrismaClient();
 
 const DEFAULT_PACKAGES = [
   {
@@ -31,20 +32,18 @@ function requiredEnv(name: string) {
 
 async function seedPackages() {
   for (const item of DEFAULT_PACKAGES) {
-    await prisma.package.upsert({
+    const existing = await prisma.package.findUnique({
       where: { code: item.code },
-      update: {
-        name: item.name,
-        unitPrice: item.unitPrice,
-        durationPerShotMinutes: item.durationPerShotMinutes,
-        isActive: true,
-        sortOrder: item.sortOrder,
-      },
-      create: {
-        ...item,
-        isActive: true,
-      },
     });
+
+    if (!existing) {
+      await prisma.package.create({
+        data: {
+          ...item,
+          isActive: true,
+        },
+      });
+    }
   }
 }
 
@@ -54,10 +53,6 @@ async function seedResource() {
   });
 
   if (existing) {
-    await prisma.resource.update({
-      where: { id: existing.id },
-      data: { isActive: true },
-    });
     return;
   }
 
@@ -70,21 +65,25 @@ async function seedResource() {
 }
 
 async function seedSettings() {
-  await prisma.businessSetting.upsert({
+  const existing = await prisma.businessSetting.findUnique({
     where: { id: "business" },
-    update: {},
-    create: {
-      id: "business",
-      openingTime: "09:00",
-      closingTime: "22:00",
-      slotDurationMinutes: 10,
-      minimumBookingNoticeMinutes: 30,
-      maximumBookingDaysAhead: 30,
-      maximumQuantity: 10,
-      timezone: "Asia/Ho_Chi_Minh",
-      currency: "VND",
-    },
   });
+
+  if (!existing) {
+    await prisma.businessSetting.create({
+      data: {
+        id: "business",
+        openingTime: "09:00",
+        closingTime: "22:00",
+        slotDurationMinutes: 10,
+        minimumBookingNoticeMinutes: 30,
+        maximumBookingDaysAhead: 30,
+        maximumQuantity: 10,
+        timezone: "Asia/Ho_Chi_Minh",
+        currency: "VND",
+      },
+    });
+  }
 }
 
 async function seedAdmin() {
@@ -96,23 +95,25 @@ async function seedAdmin() {
     throw new Error("ADMIN_PASSWORD must have at least 12 characters.");
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
-
-  await prisma.admin.upsert({
-    where: { email },
-    update: {
-      username,
-      passwordHash,
-      isActive: true,
-    },
-    create: {
-      username,
-      email,
-      passwordHash,
-      role: "ADMIN",
-      isActive: true,
+  const existing = await prisma.admin.findFirst({
+    where: {
+      OR: [{ username }, { email }],
     },
   });
+
+  if (!existing) {
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    await prisma.admin.create({
+      data: {
+        username,
+        email,
+        passwordHash,
+        role: "ADMIN",
+        isActive: true,
+      },
+    });
+  }
 }
 
 async function main() {

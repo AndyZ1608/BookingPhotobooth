@@ -3,7 +3,10 @@ node_modules
 .pnpm-store
 .env
 .env.local
+.env.production
 .env.*.local
 coverage
 dist
+src/generated
+*.tsbuildinfo
 *.log

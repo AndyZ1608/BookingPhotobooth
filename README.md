@@ -1,79 +1,174 @@
-# Photobooth Booking MVP
+# Photobooth Booking
 
-Production-ready MVP cho hệ thống đặt lịch cửa hàng photobooth: public booking page, admin dashboard, PostgreSQL/Prisma, session auth, chống double booking bằng `booking_slots` unique constraint và Telegram notification.
+Hệ thống đặt lịch photobooth gồm public booking page, admin dashboard, PostgreSQL/Prisma, session auth, chống double booking bằng unique constraint ở `booking_slots`, và Telegram notification sau khi booking commit.
 
-## Yêu cầu môi trường
+## Deployment Contract
 
-- Node.js 24 hoặc mới hơn.
-- pnpm 10.
-- PostgreSQL 16.
-- Docker và Docker Compose nếu chạy bằng container.
+Host production chỉ cần:
 
-## Cấu hình `.env`
+- Git
+- Docker Engine
+- Docker Compose Plugin
 
-Sao chép `.env.example` thành `.env` và đổi các giá trị:
+Host production không cần Node.js, npm, pnpm, Prisma CLI, PostgreSQL client, Python, hay lệnh build thủ công.
+
+Lệnh cập nhật chuẩn từ nay:
 
 ```bash
-DATABASE_URL="postgresql://photobooth:photobooth@localhost:5432/booking_photobooth?schema=public"
+git pull --ff-only
+./scripts/deploy.sh
+```
+
+Hoặc:
+
+```bash
+./scripts/update.sh
+```
+
+## Cài lần đầu
+
+```bash
+git clone <repository-url> BookingPhotobooth
+cd BookingPhotobooth
+cp .env.example .env
+nano .env
+./scripts/deploy.sh
+```
+
+Các biến bắt buộc trong `.env`:
+
+```bash
+DATABASE_URL="postgresql://photobooth:photobooth@db:5432/booking_photobooth?schema=public"
 SESSION_SECRET="random-string-it-nhat-32-ky-tu"
+RUN_DB_SEED="true"
+APP_PORT="3000"
+
 ADMIN_USERNAME="admin"
 ADMIN_EMAIL="admin@example.com"
 ADMIN_PASSWORD="mat-khau-manh-it-nhat-12-ky-tu"
+
 TELEGRAM_BOT_TOKEN=""
 TELEGRAM_CHAT_ID=""
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
-Không commit `.env`. `ADMIN_PASSWORD` chỉ dùng để seed, app lưu bcrypt hash.
+`DATABASE_URL`, `SESSION_SECRET`, `ADMIN_PASSWORD`, `TELEGRAM_BOT_TOKEN` là server-only. Không commit `.env`.
 
-## Chạy local
+## Update các lần sau
+
+```bash
+cd ~/BookingPhotobooth
+git pull --ff-only
+./scripts/deploy.sh
+```
+
+Hoặc:
+
+```bash
+cd ~/BookingPhotobooth
+./scripts/update.sh
+```
+
+`scripts/update.sh` sẽ dừng nếu working tree có thay đổi local. Script không force reset, không xóa file, không ghi đè `.env`.
+
+## Docker workflow
+
+`./scripts/deploy.sh` tự động:
+
+- validate Docker, Docker Compose và `.env`
+- chạy `docker compose config`
+- build image
+- cài dependency trong image bằng `pnpm install --frozen-lockfile`
+- generate Prisma Client trong image
+- chờ PostgreSQL healthy
+- chạy `prisma migrate deploy`
+- chạy seed idempotent nếu `RUN_DB_SEED=true`
+- start Next.js production server bằng `node server.js`
+- chờ app healthcheck
+
+Không chạy thủ công trên host:
 
 ```bash
 pnpm install
-pnpm env:check
+pnpm build
 pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
-pnpm dev
+pnpm start
 ```
 
-Sau lần install đầu tiên, commit `pnpm-lock.yaml` để build production tái lập được.
-
-Public page: [http://localhost:3000](http://localhost:3000)
-
-Admin: [http://localhost:3000/admin](http://localhost:3000/admin)
-
-## Chạy Docker Compose
+## Kiểm tra vận hành
 
 ```bash
-docker compose up --build
+docker compose ps
+curl http://localhost:3000/api/health
+docker compose logs -f app
+docker compose logs -f db
+docker compose restart app
 ```
 
-Compose sẽ khởi động PostgreSQL, chạy migration, seed dữ liệu và start Next.js.
+Health endpoint thành công:
 
-## Migration và seed
+```json
+{
+  "status": "ok",
+  "database": "connected"
+}
+```
+
+Nếu database lỗi, endpoint trả HTTP 503 và không lộ secret.
+
+## Release check
+
+Chạy trước khi bàn giao release:
 
 ```bash
-pnpm db:migrate
-pnpm db:seed
+./scripts/release-check.sh
 ```
 
-Production:
+Script chạy lint, type-check, test, Prisma validate/generate, Next.js production build, Docker Compose config, và Docker image build bên trong Docker. Host vẫn không cần pnpm.
+
+## Migration và dữ liệu
+
+Production chỉ chạy tương đương:
 
 ```bash
-pnpm db:deploy
-pnpm db:seed
+prisma migrate deploy
 ```
 
-## Telegram Bot
+Không dùng trong production:
 
-1. Mở Telegram, chat với `@BotFather`.
-2. Tạo bot bằng `/newbot`.
-3. Copy token vào `TELEGRAM_BOT_TOKEN`.
-4. Gửi một tin nhắn tới bot hoặc thêm bot vào group.
-5. Mở `https://api.telegram.org/bot<TELEGRAM_BOT_TOKEN>/getUpdates`.
-6. Lấy `chat.id` và đưa vào `TELEGRAM_CHAT_ID`.
+```bash
+prisma migrate dev
+prisma db push
+prisma migrate reset
+docker compose down -v
+```
 
-Nếu Telegram lỗi, booking vẫn được commit và lỗi được ghi vào `notification_logs`.
+`docker compose down` sẽ dừng container nhưng giữ named volume database.
+
+`docker compose down -v` xóa database volume và làm mất dữ liệu. Không dùng lệnh này khi update production.
+
+## Seed
+
+Seed script idempotent:
+
+- chỉ tạo admin mặc định nếu chưa có admin cùng username/email
+- không đổi password admin hiện có
+- chỉ tạo package mặc định nếu code chưa tồn tại
+- không ghi đè package admin đã chỉnh
+- chỉ tạo business setting nếu chưa tồn tại
+- không xóa booking hoặc dữ liệu production
+
+## Telegram
+
+Ứng dụng chỉ gọi Telegram Bot API `sendMessage` khi có booking mới. Không long polling và không cạnh tranh bot receiver.
+
+Nếu Telegram lỗi:
+
+1. Booking vẫn đã được commit.
+2. Lỗi được ghi vào `notification_logs`.
+3. API public vẫn trả booking thành công.
 
 ## Backup PostgreSQL
 
@@ -87,11 +182,9 @@ Restore:
 docker compose exec -T db psql -U photobooth booking_photobooth < backup.sql
 ```
 
-## Triển khai sau Nginx HTTPS
+## Nginx HTTPS
 
-- Chạy app ở `127.0.0.1:3000`.
-- Terminate TLS tại Nginx.
-- Forward các header:
+Chạy app sau reverse proxy:
 
 ```nginx
 proxy_set_header Host $host;
@@ -100,17 +193,8 @@ proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 proxy_set_header X-Forwarded-Proto $scheme;
 ```
 
-Khi chạy production sau HTTPS, cookie session sẽ được set `Secure`.
+Khi `NODE_ENV=production`, session cookie được set `Secure`.
 
-## Kiểm tra
+## Chi tiết contract
 
-```bash
-pnpm lint
-pnpm type-check
-pnpm test
-pnpm build
-pnpm exec prisma validate
-pnpm exec prisma generate
-```
-
-Integration tests đụng DB chỉ nên chạy trên database test riêng.
+Xem [docs/DEPLOYMENT_CONTRACT.md](docs/DEPLOYMENT_CONTRACT.md).

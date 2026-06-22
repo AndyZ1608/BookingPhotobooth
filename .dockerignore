@@ -3,6 +3,8 @@ node_modules
 .git
 coverage
 dist
+src/generated
+*.tsbuildinfo
 *.log
 .env
 .env.local

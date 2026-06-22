@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Ban,
   CalendarClock,
@@ -190,7 +190,7 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
     return params.toString();
   }, [date, from, packageId, search, status, to]);
 
-  async function loadDashboard() {
+  const loadDashboard = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
@@ -208,17 +208,17 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function loadBookings() {
+  const loadBookings = useCallback(async () => {
     try {
       setBookings(await fetchJson<BookingDto[]>(`/api/admin/bookings?${filteredParams}`));
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Không tải được danh sách booking.");
     }
-  }
+  }, [filteredParams]);
 
-  async function loadBlockedTimes() {
+  const loadBlockedTimes = useCallback(async () => {
     try {
       const params = new URLSearchParams();
       if (blockedForm.date) params.set("date", blockedForm.date);
@@ -226,19 +226,25 @@ export function AdminDashboard({ adminName }: { adminName: string }) {
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Không tải được lịch chặn.");
     }
-  }
-
-  useEffect(() => {
-    void loadDashboard();
-  }, []);
-
-  useEffect(() => {
-    void loadBookings();
-  }, [filteredParams]);
-
-  useEffect(() => {
-    void loadBlockedTimes();
   }, [blockedForm.date]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadDashboard();
+    });
+  }, [loadDashboard]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadBookings();
+    });
+  }, [loadBookings]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      void loadBlockedTimes();
+    });
+  }, [loadBlockedTimes]);
 
   async function logout() {
     await fetch("/api/admin/auth/logout", { method: "POST" });
