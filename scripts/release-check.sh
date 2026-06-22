@@ -33,4 +33,27 @@ docker build --target test -t bookingphotobooth:release-check .
 echo "Building production Docker image..."
 docker compose build app
 
+echo "Checking runtime toolchain..."
+corepack_version="$(docker compose run --rm --no-deps --entrypoint corepack app --version)"
+pnpm_version="$(docker compose run --rm --no-deps --entrypoint pnpm app --version)"
+openssl_version="$(docker compose run --rm --no-deps --entrypoint openssl app version)"
+
+echo "Corepack: ${corepack_version}"
+echo "pnpm: ${pnpm_version}"
+echo "OpenSSL: ${openssl_version}"
+
+if [ "$corepack_version" != "0.35.0" ]; then
+  echo "Expected Corepack 0.35.0, got ${corepack_version}"
+  exit 1
+fi
+
+if [ "$pnpm_version" != "10.23.0" ]; then
+  echo "Expected pnpm 10.23.0, got ${pnpm_version}"
+  exit 1
+fi
+
+echo "Running Prisma validate/generate in runtime image..."
+docker compose run --rm --no-deps --entrypoint pnpm app prisma validate
+docker compose run --rm --no-deps --entrypoint pnpm app db:generate
+
 echo "Release check completed successfully."

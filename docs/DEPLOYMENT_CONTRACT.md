@@ -11,6 +11,22 @@ git pull --ff-only
 
 No production operator should need to install Node.js, npm, pnpm, Prisma CLI, PostgreSQL client tools, Python, or any application dependency on the host.
 
+## Toolchain Contract
+
+- Docker base image must stay on Debian Bookworm Slim or another explicitly reviewed Debian-based image.
+- Corepack version is pinned in `Dockerfile` and must be installed before pnpm.
+- pnpm version is pinned in `Dockerfile` and must match `packageManager` in `package.json`.
+- Do not rely on the Corepack version bundled in the Node image.
+- Do not disable Corepack signature verification.
+- Do not download package managers at container runtime.
+- Do not run `corepack prepare`, `corepack install`, `npm install`, `pnpm install`, or dependency installation in `scripts/docker-entrypoint.sh`.
+- Toolchain changes must be verified by Docker build and runtime tool checks.
+
+Required versions:
+
+- Corepack: `0.35.0`
+- pnpm: `10.23.0`
+
 ## Synchronized Changes
 
 When source code or features change, update the deployment surface in the same change set.
@@ -34,6 +50,8 @@ If adding an environment variable, update:
 - `.env.example`
 - `docker-compose.yml` if the variable is required by a service
 - `README.md`
+
+Secrets must not be declared in `Dockerfile` as `ARG` or `ENV`. Runtime secrets are injected only by Docker Compose from `.env` interpolation.
 
 If adding a service, update:
 

@@ -21,12 +21,16 @@ services:
       context: .
       target: runner
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       DATABASE_URL: postgresql://photobooth:photobooth@db:5432/booking_photobooth?schema=public
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?ADMIN_USERNAME is required}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?ADMIN_EMAIL is required}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
       RUN_DB_SEED: ${RUN_DB_SEED:-true}
-      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?NEXT_PUBLIC_APP_URL is required}
     depends_on:
       db:
         condition: service_healthy

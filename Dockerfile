@@ -2,6 +2,9 @@
 
 FROM node:22.12.0-bookworm-slim AS base
 
+ARG COREPACK_VERSION=0.35.0
+ARG PNPM_VERSION=10.23.0
+
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1 \
@@ -10,11 +13,17 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     PATH=/pnpm:$PATH
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+       openssl \
+       ca-certificates \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p "$PNPM_HOME" "$COREPACK_HOME" \
+    && npm install --global "corepack@${COREPACK_VERSION}" \
     && corepack enable \
-    && corepack prepare pnpm@10.23.0 --activate \
+    && corepack install --global "pnpm@${PNPM_VERSION}" \
+    && command -v corepack \
+    && corepack --version \
+    && command -v pnpm \
     && pnpm --version \
     && chmod -R a+rX "$COREPACK_HOME" "$PNPM_HOME"
 
@@ -26,22 +35,15 @@ RUN pnpm install --frozen-lockfile
 
 FROM base AS test
 
-ENV DATABASE_URL=postgresql://user:pass@db:5432/db?schema=public \
-    SESSION_SECRET=build-time-secret-build-time-secret
-
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN pnpm db:generate
 RUN pnpm lint
 RUN pnpm type-check
 RUN pnpm test
-RUN pnpm prisma validate
 RUN pnpm build
 
 FROM base AS builder
-
-ENV DATABASE_URL=postgresql://user:pass@db:5432/db?schema=public \
-    SESSION_SECRET=build-time-secret-build-time-secret
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -61,6 +63,8 @@ COPY --from=builder --chown=node:node /app/prisma ./prisma
 COPY --from=builder --chown=node:node /app/src/generated ./src/generated
 COPY --from=builder --chown=node:node /app/package.json ./package.json
 COPY --from=builder --chown=node:node /app/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder --chown=node:node /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=builder --chown=node:node /app/.npmrc ./.npmrc
 COPY --from=builder --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
 

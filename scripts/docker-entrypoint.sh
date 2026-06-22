@@ -32,7 +32,7 @@ wait_for_database() {
 
   while [ "$attempt" -le "$max_attempts" ]; do
     if node - <<'NODE'
-const { PrismaClient } = require("@prisma/client");
+const { PrismaClient } = require("./src/generated/prisma");
 const prisma = new PrismaClient();
 
 prisma
@@ -63,11 +63,11 @@ validate_runtime_env
 wait_for_database
 
 log "Applying database migrations..."
-./node_modules/.bin/prisma migrate deploy
+pnpm prisma migrate deploy
 
 if [ "${RUN_DB_SEED:-false}" = "true" ]; then
   log "Running idempotent database seed..."
-  ./node_modules/.bin/tsx prisma/seed.ts
+  pnpm db:seed
 else
   log "Database seed disabled."
 fi

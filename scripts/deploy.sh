@@ -4,6 +4,14 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
+NO_CACHE=false
+if [ "${1:-}" = "--no-cache" ]; then
+  NO_CACHE=true
+elif [ "${1:-}" != "" ]; then
+  echo "Usage: ./scripts/deploy.sh [--no-cache]"
+  exit 1
+fi
+
 on_error() {
   local exit_code=$?
   set +e
@@ -62,19 +70,15 @@ if [ ! -f .env ]; then
 fi
 
 require_env SESSION_SECRET
+require_env ADMIN_USERNAME
+require_env ADMIN_EMAIL
+require_env ADMIN_PASSWORD
+require_env NEXT_PUBLIC_APP_URL
 
 session_secret_length="$(read_env_value SESSION_SECRET | wc -c | tr -d ' ')"
 if [ "$session_secret_length" -lt 32 ]; then
   echo "SESSION_SECRET must have at least 32 characters."
   exit 1
-fi
-
-run_seed="$(read_env_value RUN_DB_SEED)"
-run_seed="${run_seed:-true}"
-if [ "$run_seed" = "true" ]; then
-  require_env ADMIN_USERNAME
-  require_env ADMIN_EMAIL
-  require_env ADMIN_PASSWORD
 fi
 
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -90,7 +94,11 @@ echo "Validating Docker Compose configuration..."
 docker compose config >/dev/null
 
 echo "Building Docker image..."
-docker compose build app
+if [ "$NO_CACHE" = "true" ]; then
+  docker compose build --no-cache app
+else
+  docker compose build app
+fi
 
 echo "Starting services..."
 docker compose up -d

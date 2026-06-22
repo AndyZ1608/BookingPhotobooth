@@ -78,6 +78,8 @@ cd ~/BookingPhotobooth
 - validate Docker, Docker Compose và `.env`
 - chạy `docker compose config`
 - build image
+- cài `corepack@0.35.0` trong image
+- cài `pnpm@10.23.0` qua Corepack trong image
 - cài dependency trong image bằng `pnpm install --frozen-lockfile`
 - generate Prisma Client trong image
 - chờ PostgreSQL healthy
@@ -96,6 +98,8 @@ pnpm db:migrate
 pnpm db:seed
 pnpm start
 ```
+
+Không có bước tải pnpm ở container runtime. Runtime chỉ chạy migration, seed idempotent nếu bật, rồi start `node server.js`.
 
 ## Kiểm tra vận hành
 
@@ -127,6 +131,12 @@ Chạy trước khi bàn giao release:
 ```
 
 Script chạy lint, type-check, test, Prisma validate/generate, Next.js production build, Docker Compose config, và Docker image build bên trong Docker. Host vẫn không cần pnpm.
+
+Release check cũng xác minh:
+
+- Corepack: `0.35.0`
+- pnpm: `10.23.0`
+- OpenSSL: available
 
 ## Migration và dữ liệu
 
