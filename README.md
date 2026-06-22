@@ -15,13 +15,6 @@ Host production không cần Node.js, npm, pnpm, Prisma CLI, PostgreSQL client, 
 Lệnh cập nhật chuẩn từ nay:
 
 ```bash
-git pull --ff-only
-./scripts/deploy.sh
-```
-
-Hoặc:
-
-```bash
 ./scripts/update.sh
 ```
 
@@ -43,6 +36,7 @@ SESSION_SECRET="random-string-it-nhat-32-ky-tu"
 SESSION_COOKIE_SECURE="false"
 ADMIN_SESSION_TTL_HOURS="12"
 RUN_DB_SEED="true"
+APP_BIND_ADDRESS="127.0.0.1"
 APP_PORT="3000"
 
 ADMIN_USERNAME="admin"
@@ -60,18 +54,10 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 ```bash
 cd ~/BookingPhotobooth
-git pull --ff-only
-./scripts/deploy.sh
-```
-
-Hoặc:
-
-```bash
-cd ~/BookingPhotobooth
 ./scripts/update.sh
 ```
 
-`scripts/update.sh` sẽ dừng nếu working tree có thay đổi local. Script không force reset, không xóa file, không ghi đè `.env`.
+`scripts/update.sh` fetch/pull bằng fast-forward, chạy deploy, và dừng nếu working tree có thay đổi local thật. Script không force reset, không xóa file, không ghi đè `.env`, không tạo backup trong repository, và không sửa tracked files.
 
 ## Docker workflow
 
@@ -89,6 +75,15 @@ cd ~/BookingPhotobooth
 - chạy seed idempotent nếu `RUN_DB_SEED=true`
 - start Next.js production server bằng `node server.js`
 - chờ app healthcheck
+- kiểm tra `http://127.0.0.1:${APP_PORT}/api/health`
+
+Mặc định app chỉ bind vào localhost của host:
+
+```text
+127.0.0.1:3000 -> container:3000
+```
+
+Nginx trên host proxy đến `127.0.0.1:3000`. Không sửa `docker-compose.yml` thủ công trên production.
 
 Không chạy thủ công trên host:
 
@@ -161,6 +156,15 @@ docker compose down -v
 `docker compose down` sẽ dừng container nhưng giữ named volume database.
 
 `docker compose down -v` xóa database volume và làm mất dữ liệu. Không dùng lệnh này khi update production.
+
+Sau mỗi update thành công:
+
+- Git working tree sạch.
+- `.env` được giữ nguyên.
+- Database volume được giữ nguyên.
+- PostgreSQL không publish port ra host.
+- App health endpoint trả HTTP 200.
+- Không cần chạy `chmod` thủ công vì executable bit của scripts được lưu trong Git.
 
 ## Seed
 

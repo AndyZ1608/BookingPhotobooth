@@ -5,11 +5,29 @@ This repository must remain deployable with only Git, Docker Engine, and the Doc
 Standard update command:
 
 ```bash
-git pull --ff-only
-./scripts/deploy.sh
+./scripts/update.sh
 ```
 
 No production operator should need to install Node.js, npm, pnpm, Prisma CLI, PostgreSQL client tools, Python, or any application dependency on the host.
+
+Production operators must not need to edit tracked files, run `chmod`, create backups inside the repository, reset Git state, or manually change Docker Compose after pulling updates.
+
+## Git And Runtime Cleanliness
+
+- Shell scripts called directly must be committed with executable mode `100755`.
+- At minimum, `scripts/deploy.sh`, `scripts/update.sh`, `scripts/docker-entrypoint.sh`, and `scripts/release-check.sh` must be executable in Git.
+- `.env` is the only expected local runtime file in the repository root and must remain ignored.
+- Backup files such as `.env.save`, `.env.bak`, `*.backup`, `*.patch`, and temporary files must be ignored and should be stored outside the repository.
+- Production updates must finish with `git status --porcelain` empty.
+- Deployment scripts must not run `chmod` on tracked files, create backup files in the repository, or mutate source files.
+
+## Docker Networking Contract
+
+- The app service must bind to `${APP_BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3000}:3000`.
+- The default bind address is `127.0.0.1`, so host Nginx can proxy to `127.0.0.1:3000` without exposing the app port publicly.
+- PostgreSQL must not publish port `5432` to the host.
+- Docker healthchecks must call `http://127.0.0.1:3000/api/health` and must not depend on public DNS, Nginx, NAT, or TLS.
+- Application deploy health must verify the internal localhost endpoint, not a public domain.
 
 ## Toolchain Contract
 
@@ -135,14 +153,13 @@ Verify database creation, migrations, seed, and app health.
 Existing installation:
 
 ```bash
-git pull --ff-only
-./scripts/deploy.sh
+./scripts/update.sh
 ```
 
 Verify old bookings remain, existing admin password remains unchanged, settings are not reset, migrations only apply pending files, no duplicate seed data is created, and app health is green.
 
 ## Rollback Policy
 
-Deployment scripts must not delete volumes or reset the database. If an app deployment fails, roll back code to a known-good revision and rerun `./scripts/deploy.sh`.
+Deployment scripts must not delete volumes or reset the database. If an app deployment fails, roll back code to a known-good revision and rerun `./scripts/deploy.sh` for that checked-out revision, or rerun `./scripts/update.sh` after restoring the desired Git state.
 
 Database rollback must be planned manually. Do not run `prisma migrate reset` or `docker compose down -v` as an application rollback.

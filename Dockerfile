@@ -65,15 +65,13 @@ COPY --from=builder --chown=node:node /app/pnpm-lock.yaml ./pnpm-lock.yaml
 COPY --from=builder --chown=node:node /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=builder --chown=node:node /app/.npmrc ./.npmrc
 COPY --from=builder --chown=node:node /app/node_modules ./node_modules
-COPY --chown=node:node scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
-
-RUN chmod +x ./scripts/docker-entrypoint.sh
+COPY --chown=node:node --chmod=0755 scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
 
 USER node
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=45s --retries=5 \
-  CMD node -e "fetch('http://127.0.0.1:3000/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=12 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:3000/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
 
 ENTRYPOINT ["./scripts/docker-entrypoint.sh"]
